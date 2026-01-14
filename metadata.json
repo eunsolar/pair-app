@@ -1,0 +1,7 @@
+{
+  "name": "페어 기록 어플",
+  "description": "A dedicated mobile app to manage and track anniversaries for your original character pairs, featuring milestone calculations, calendar integration, and a scheduled to-do list with notifications.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
