@@ -53,6 +53,7 @@ import Navigation from './components/Navigation';
 const FORTUNE_LEVELS = ['대길', '중길', '소길', '길', '말', '흉', '소흉', '중흉', '대흉'];
 
 const App: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [view, setView] = useState<ViewState>('home');
   const [pairs, setPairs] = useState<Pair[]>([]);
   const [characters, setCharacters] = useState<Character[]>([]);
@@ -93,22 +94,32 @@ const App: React.FC = () => {
   const pairImageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const savedPairs = localStorage.getItem('pair_records_v11_pairs');
-    const savedChars = localStorage.getItem('pair_records_v11_chars');
-    const savedReports = localStorage.getItem('pair_records_v11_reports');
-    const savedFortune = localStorage.getItem('pair_records_v11_fortune');
-    const savedFmtCharId = localStorage.getItem('pair_records_v11_fortune_char');
-    
-    if (savedPairs) setPairs(JSON.parse(savedPairs));
-    if (savedChars) setCharacters(JSON.parse(savedChars));
-    if (savedReports) setReports(JSON.parse(savedReports));
-    if (savedFortune) setDailyFortune(JSON.parse(savedFortune));
-    if (savedFmtCharId) setFortuneCharId(savedFmtCharId);
+    const loadData = () => {
+      try {
+        const savedPairs = localStorage.getItem('pair_records_v11_pairs');
+        const savedChars = localStorage.getItem('pair_records_v11_chars');
+        const savedReports = localStorage.getItem('pair_records_v11_reports');
+        const savedFortune = localStorage.getItem('pair_records_v11_fortune');
+        const savedFmtCharId = localStorage.getItem('pair_records_v11_fortune_char');
+        
+        if (savedPairs) setPairs(JSON.parse(savedPairs));
+        if (savedChars) setCharacters(JSON.parse(savedChars));
+        if (savedReports) setReports(JSON.parse(savedReports));
+        if (savedFortune) setDailyFortune(JSON.parse(savedFortune));
+        if (savedFmtCharId) setFortuneCharId(savedFmtCharId);
+      } catch (error) {
+        console.error("Failed to load local data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
+    loadData();
     if ("Notification" in window) Notification.requestPermission();
   }, []);
 
   useEffect(() => {
+    if (isLoading) return;
     const interval = setInterval(async () => {
       const now = new Date();
       if (!isSameDay(selectedDate, now) && format(now, 'HH:mm') === '00:00') {
@@ -168,7 +179,7 @@ const App: React.FC = () => {
       if (hasChanges) savePairs(updatedPairs);
     }, 60000);
     return () => clearInterval(interval);
-  }, [pairs, characters, selectedDate]);
+  }, [pairs, characters, selectedDate, isLoading]);
 
   const savePairs = (updated: Pair[]) => {
     setPairs(updated);
@@ -637,8 +648,17 @@ const App: React.FC = () => {
     </div>
   );
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50">
+        <div className="w-12 h-12 border-4 border-rose-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="font-bold text-slate-400">Loading Records...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-[#FDFDFE] relative overflow-x-hidden no-scrollbar pb-10">
+    <div className="max-w-md mx-auto min-h-screen bg-[#FDFDFE] relative overflow-x-hidden no-scrollbar pb-10 shadow-xl">
       <main>
         {view === 'home' && renderHome()}
         {view === 'characters' && renderCharacters()}
